@@ -368,7 +368,7 @@ void Board::load (const Board* save_board) {
       (diag_color_cnt [Color::off_board ()] > 0) < 2;
   }
 
-flatten all_inline
+//flatten all_inline
 void Board::play_legal (Player player, Vertex v) { // TODO test with move
   check ();
 
@@ -404,7 +404,7 @@ bool Board::play_eye_is_suicide (Vertex v) {
 }
 
 
-all_inline
+//all_inline
 void Board::play_not_eye (Player player, Vertex v) {
   check ();
   v.check_is_on_board ();

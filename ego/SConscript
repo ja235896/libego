@@ -1,3 +1,19 @@
+import distutils.sysconfig
+
 Import('env')
+
+# SWIG stuff
+
+swig_env = env.Clone()
+swig_env.Append(
+  SWIGFLAGS = ['-python', '-c++'],
+  CPPPATH = [distutils.sysconfig.get_python_inc()],
+)
+
+swig_env.SharedLibrary(
+  '_ego.so', 
+  ['ego.cpp', 'ego.i'], 
+  SHLIBPREFIX = ""       # TODO Why this can't be in swig_env?
+)
 
 env.Library('ego', ['ego.cpp'])
