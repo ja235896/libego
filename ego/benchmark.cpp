@@ -90,45 +90,19 @@ namespace Benchmark {
     float seconds_end = get_seconds ();
     fast_timer.stop ();
     
-    out << "Initial board:" << endl;
-    out << "komi " << start_board->get_komi () << " for white" << endl;
-    
-    out << start_board->to_string ();
-    out << endl;
-    
-    if (score_per_vertex) {
-      FastMap<Vertex, float> black_own;
-      vertex_for_each_all (v) 
-        black_own [v] = float(vertex_score [v]) / float (playout_ok_cnt);
-
-      out << "P(black owns vertex) rescaled to [-1, 1] (p*2 - 1): " << endl 
-          << to_string_2d (black_own) 
-          << endl;
-    }
-
-    out << "Black wins    = " << win_cnt [Player::black ()] << endl
-        << "White wins    = " << win_cnt [Player::white ()] << endl
-        << "P(black win)  = " 
-        << float (win_cnt [Player::black ()]) / 
-           float (win_cnt [Player::black ()] + win_cnt [Player::white ()]) 
-        << endl;
-
     float avg_score = float (playout_ok_score) / float (playout_ok_cnt);
 
-    out << "E(score)      = " 
-        << avg_score - 0.5 
-        << " (without komi = " << avg_score - mc_board->komi << ")" << endl << endl;
+    ostringstream s;
+    s << "E(score)      = " 
+      << avg_score - 0.5 
+      << " (without komi = " << avg_score - mc_board->komi << ")" << endl << endl;
 
     float seconds_total = seconds_end - seconds_begin;
     float cc_per_playout = fast_timer.ticks () / double (playout_cnt);
 
-    out << "Performance: " << endl
-        << "  " << playout_cnt << " playouts" << endl
-        << "  " << seconds_total << " seconds" << endl
-        << "  " << float (playout_cnt) / seconds_total / 1000.0 << " kpps" << endl
-        << "  " << cc_per_playout << " ccpp (clock cycles per playout)" << endl
-        << "  " << 1000000.0 / cc_per_playout  << " kpps/GHz (clock independent)" << endl
-      ;
+    out
+      << float (playout_cnt) / seconds_total / 1000.0 << " kpps ("
+      << cc_per_playout << " clock cycles per playout)" << endl;
   }
 
   void run (Board const * start_board, 

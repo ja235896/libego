@@ -73,7 +73,7 @@ void process_command_line (Gtp& gtp, int argc, char** argv) {
 
 // main
 
-int main (int argc, char** argv) { 
+int main () { 
   // to work well with gogui
   setvbuf (stdout, (char *)NULL, _IONBF, 0);
   setvbuf (stderr, (char *)NULL, _IONBF, 0);
@@ -89,11 +89,11 @@ int main (int argc, char** argv) {
   Uct uct (board);
   GtpGenmove<Uct>  gtp_genmove (gtp, board, uct);
   
-  // arguments
-  process_command_line (gtp, argc, argv);
-  
   // command-answer GTP loop
-  gtp.run_loop ();
-
+  Benchmark::run (&board, 200000, cout, false);
+  Benchmark::run (&board, 200000, cout, false);
+  Benchmark::run (&board, 200000, cout, false);
+  Benchmark::run (&board, 500000, cout, false);
+  Benchmark::run (&board, 1000000, cout, false);
   return 0;
 }

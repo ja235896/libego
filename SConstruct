@@ -18,6 +18,7 @@ env["opt"] = env["base"].Clone()
 env["opt"].Append(
   CXXFLAGS = [
     "-O3",
+    "-static",
     "-march=native",
     "-fomit-frame-pointer",
     "-ffast-math",

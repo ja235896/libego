@@ -31,7 +31,7 @@ public:
   static GtpResult quit () { return GtpResult (status_quit); }
 
   bool quit_loop () { return status_ == status_quit; }
-  string to_string () { return status_marker () + " " + response_ + "\n\n"; }
+  string to_string () { return response_ + "\n"; }
 
 private:
   enum Status {
