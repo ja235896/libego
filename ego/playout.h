@@ -62,4 +62,44 @@ private:
 
 typedef Playout<SimplePolicy> SimplePlayout;
 
+// -----------------------------------------------------------------------------
+
+class AtariPolicy {
+public:
+  flatten all_inline
+  bool try_play (Board* board, Player pl, Vertex v) {
+    if (v != Vertex::any() &&
+        !board->is_eyelike (pl, v) &&
+        board->is_pseudo_legal (pl, v)) { 
+      board->play_legal(pl, v);
+      // cerr << "bad threat : " << endl;
+      // board->print_cerr(board->move_history[board->move_no-1].get_vertex());
+      // cerr << board->last_empty_v_cnt << " -> " << board->empty_v_cnt << endl;
+      return true;
+    }
+    return false;
+  }
+
+  flatten all_inline
+  void play_move (Board* board) {
+    Player act_player  = board->act_player();
+    Player last_player = board->last_player();
+
+    FastMap<Player, Vertex> atari_v;
+    board->pseudo_atari(&atari_v);
+
+    if (try_play(board, act_player, atari_v[last_player])) {
+      assertc (playout_ac, board->last_capture_size() > 0);
+      return;
+    }
+
+    if (try_play(board, act_player, atari_v[act_player])) return;
+
+    simple_policy_.play_move(board);
+  }
+
+private:
+  SimplePolicy simple_policy_;
+};
+
 #endif
