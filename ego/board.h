@@ -77,6 +77,8 @@ public:                         // board interface
   // debugging helper
   void print_cerr (Vertex v = Vertex::pass ()) const;
 
+  void pseudo_atari (FastMap<Player, Vertex>* atari_v);
+
   uint last_capture_size ();
 
 private: 
@@ -133,6 +135,7 @@ private:
 
   struct Chain {
     uint lib_cnt;
+    uint lib_sum;
   };
 
   Chain& chain_at (Vertex v);

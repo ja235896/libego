@@ -438,6 +438,7 @@ void Board::play_not_eye (Player player, Vertex v) {
 
       if (color_at [nbr_v].is_player ()) {
         chain_at(nbr_v).lib_cnt -= 1;
+        chain_at(nbr_v).lib_sum -= v.get_idx();
 
         if (color_at [nbr_v] != Color (player)) { // same color of groups
           if (chain_at(nbr_v).lib_cnt == 0)
@@ -467,7 +468,10 @@ void Board::play_not_eye (Player player, Vertex v) {
 
 no_inline
 void Board::play_eye_legal (Player player, Vertex v) {
-  vertex_for_each_nbr (v, nbr_v, chain_at(nbr_v).lib_cnt -= 1);
+  vertex_for_each_nbr (v, nbr_v, {
+    chain_at(nbr_v).lib_cnt -= 1;
+    chain_at(nbr_v).lib_sum -= v.get_idx();
+  });
 
   basic_play (player, v);
   place_stone (player, v);
@@ -507,6 +511,7 @@ void Board::merge_chains (Vertex v_base, Vertex v_new) {
   Vertex act_v;
 
   chain_at(v_base).lib_cnt += chain_at(v_new).lib_cnt;
+  chain_at(v_base).lib_sum += chain_at(v_new).lib_sum;
 
   act_v = v_new;
   do {
@@ -539,6 +544,7 @@ void Board::remove_chain (Vertex v) {
     vertex_for_each_nbr (act_v, nbr_v, {
         nbr_cnt [nbr_v].player_dec (old_color.to_player());
         chain_at(nbr_v).lib_cnt += 1;
+        chain_at(nbr_v).lib_sum += act_v.get_idx();
       });
 
     tmp_v = act_v;
@@ -562,6 +568,10 @@ void Board::place_stone (Player pl, Vertex v) {
 
   chain_id_ [v] = v;
   chain_at(v).lib_cnt = nbr_cnt[v].empty_cnt ();
+  chain_[v].lib_sum = 0;
+  vertex_for_each_nbr(v, nbr, {
+    chain_[v].lib_sum += nbr.get_idx() & -(color_at[nbr] == Color::empty());
+  });
 }
 
 
@@ -678,6 +688,18 @@ Board::Chain& Board::chain_at (Vertex v) {
   return chain_[chain_id_[v]];
 }
 
+void Board::pseudo_atari (FastMap<Player, Vertex>* atari_v) {
+  player_for_each(pl) (*atari_v)[pl] = Vertex::any();
+  if (move_no == 0) return;
+  Vertex last_v = move_history[move_no-1].get_vertex();
+  if (last_v == Vertex::pass()) return;
+
+  vertex_for_each_5_nbr(last_v, vv, {
+    if (color_at[vv].is_player() && chain_at(vv).lib_cnt == 1)
+      (*atari_v)[color_at[vv].to_player()] = Vertex(chain_at(vv).lib_sum);
+  });
+}
+
 uint Board::last_capture_size () {
   return empty_v_cnt + 1 - last_empty_v_cnt;
 }
@@ -726,6 +748,17 @@ void Board::check_chain_at () const {
     if (color_at [v].is_player ()) {
 
       assert (chain_[chain_id_[v]].lib_cnt != 0);
+      assert (chain_[chain_id_[v]].lib_sum != 0);
+
+      if (chain_[chain_id_[v]].lib_cnt == 1) {
+        Vertex atari = Vertex(chain_[chain_id_[v]].lib_sum);
+        assert (color_at[atari] == Color::empty());
+        uint my_nbr_cnt = 0;
+        vertex_for_each_nbr (atari, nbr, {
+            my_nbr_cnt += chain_id_ [v] == chain_id_[nbr];
+        });
+        assert (my_nbr_cnt == 1);
+      }
 
       vertex_for_each_nbr (v, nbr_v, {
           if (color_at[v] == color_at[nbr_v])
