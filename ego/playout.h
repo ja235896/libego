@@ -55,9 +55,10 @@ public:
 
 class SimplePolicy {
 public:
+  SimplePolicy(FastRandom& random_);
   void play_move (Board* board);
 private:
-  static FastRandom random; // TODO make it non-static
+  FastRandom& random;
 };
 
 typedef Playout<SimplePolicy> SimplePlayout;
@@ -66,6 +67,9 @@ typedef Playout<SimplePolicy> SimplePlayout;
 
 class AtariPolicy {
 public:
+  AtariPolicy(FastRandom& random_) : simple_policy_(random_) {
+  }
+
   flatten all_inline
   bool try_play (Board* board, Player pl, Vertex v) {
     if (v != Vertex::any() &&

@@ -75,9 +75,13 @@ public:
   float       influence_scale;
   float       prior;
   bool        progress_dots;
+  AtariPolicy  apolicy;
+  SimplePolicy spolicy;
 
 public:
-  AllAsFirst (Gtp& gtp, Board& board_) : board (&board_) { 
+  AllAsFirst (Gtp& gtp, Board& board_)
+  : board (&board_), apolicy(global_random), spolicy(global_random)
+  { 
     playout_no       = 50000;
     aaf_fraction     = 0.5;
     influence_scale  = 6.0;
@@ -103,13 +107,13 @@ public:
   }
 
   template<typename Policy>
-  void do_playout (const Board* base_board) {
+  void do_playout (const Board* base_board, Policy* policy) {
     Board mc_board [1];
     mc_board->load (base_board);
 
-    Policy policy;
-    Playout<Policy> playout(&policy, mc_board);
+    Playout<Policy> playout(policy, mc_board);
     playout.run ();
+
     uint aaf_move_count = uint (float(playout.move_history_length)*aaf_fraction);
     float score = mc_board->score ();
     aaf_stats.update (playout.move_history, aaf_move_count, score);
@@ -120,8 +124,7 @@ public:
     Board mc_board [1];
     mc_board->load (board);
 
-    AtariPolicy policy;
-    Playout<AtariPolicy> playout(&policy, mc_board);
+    Playout<AtariPolicy> playout(&apolicy, mc_board);
     playout.run ();
     uint aaf_move_count = uint (float(playout.move_history_length)*aaf_fraction);
 
@@ -139,9 +142,9 @@ public:
     rep (ii, playout_no) {
       if (progress_dots && (ii * 20) % playout_no == 0) cerr << "." << flush;
       if (atari) {
-        do_playout<AtariPolicy> (board);
+        do_playout<AtariPolicy> (board, &apolicy);
       } else {
-        do_playout<SimplePolicy> (board);
+        do_playout<SimplePolicy> (board, &spolicy);
       }
     }
     if (progress_dots) cerr << endl;

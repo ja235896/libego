@@ -67,7 +67,6 @@ public:
     have_child = true;
     // TODO assert
     children[new_child->v] = new_child;
-    children[new_child->v] = new_child;
   }
 
   void remove_child (Node* del_child) { // TODO inefficient
@@ -208,6 +207,7 @@ public:
   }
   
   void delete_act_node () {
+    assertc (tree_ac, act_node ()->no_children ());
     assertc (tree_ac, history_top > 0);
     history [history_top-1]->remove_child (act_node ());
     node_pool.free (act_node ());
@@ -242,11 +242,12 @@ class Uct {
 public:
   
   Board&        base_board;
-  Tree          tree[1];      // TODO tree->root should be in sync with top of base_board
+  Tree          tree[1];      // TODO sync tree->root with base_board
+  SimplePolicy  policy;
   
 public:
   
-  Uct (Board& base_board_) : base_board (base_board_) { }
+  Uct (Board& base_board_) : base_board (base_board_), policy(global_random) { }
 
   void root_ensure_children_legality (Player pl) { // cares about superko in root (only)
     tree->history_reset ();
@@ -262,17 +263,12 @@ public:
 
   flatten 
   void do_playout (Player first_player){
-    Board    play_board[1]; // TODO test for perfomance + memcpy
-    FastMap<Player, bool> was_pass;
-    Player  act_player = first_player;
-    Vertex       v;
-    
+    Board play_board[1]; // TODO test for perfomance + memcpy
+    Player act_player = first_player;
+    Vertex v;
     
     play_board->load (&base_board);
     tree->history_reset ();
-    
-    player_for_each (pl) 
-      was_pass [pl] = false; // TODO maybe there was one pass ?
     
     do {
       if (tree->act_node ()->no_children ()) { // we're finishing it
@@ -289,8 +285,6 @@ public:
           continue;            // try again
         }
         
-        // TODO assert act_plauer == board->Act_player ()
-        SimplePolicy policy;
         Playout<SimplePolicy> (&policy, play_board).run ();
         break;
         
@@ -300,7 +294,6 @@ public:
       v = tree->act_node ()->v;
       
       if (play_board->is_pseudo_legal (act_player, v) == false) {
-        assertc (uct_ac, tree->act_node ()->no_children ());
         tree->delete_act_node ();
         return;
       }
@@ -308,30 +301,27 @@ public:
       play_board->play_legal (act_player, v);
 
       if (play_board->last_move_status != Board::play_ok) {
-        assertc (uct_ac, tree->act_node ()->no_children ());
         tree->delete_act_node ();
         return;
       }
 
-      was_pass [act_player]  = (v == Vertex::pass ());
-      act_player             = act_player.other ();
-      
-      if (was_pass [Player::black ()] & was_pass [Player::white ()]) break;
-      
+      act_player = act_player.other();
+
+      if (play_board->both_player_pass()) break;
+
     } while (true);
     
-    int winner_idx = play_board->winner ().get_idx ();
-    tree->update_history (1 - winner_idx - winner_idx); // result means are 1 for black, -1 for white
+    int score = play_board->winner().get_idx (); // black -> 0, white -> 1
+    tree->update_history (1 - score - score); // black -> 1, white -> -1
   }
   
 
   Vertex genmove (Player player) {
-    Node* best;
 
     root_ensure_children_legality (player);
 
     rep (ii, uct_genmove_playout_cnt) do_playout (player);
-    best = tree->history [0]->find_most_explored_child ();
+    Node* best = tree->history [0]->find_most_explored_child ();
     assertc (uct_ac, best != NULL);
 
     cerr << tree->to_string () << endl;
