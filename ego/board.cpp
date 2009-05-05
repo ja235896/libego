@@ -305,7 +305,7 @@ void Board::clear () {
       empty_pos  [v]              = empty_v_cnt;
       empty_v    [empty_v_cnt++]  = v;
 
-      vertex_for_each_nbr (v, nbr_v, {
+      vertex_for_each_4_nbr (v, nbr_v, {
         if (!nbr_v.is_on_board ()) {
           nbr_cnt [v].off_board_inc ();
         }
@@ -416,8 +416,8 @@ bool Board::eye_is_ko (Player player, Vertex v) {
 
 bool Board::eye_is_suicide (Vertex v) {
   uint all_nbr_live = true;
-  vertex_for_each_nbr (v, nbr_v, all_nbr_live &= (--chain_at(nbr_v).lib_cnt != 0));
-  vertex_for_each_nbr (v, nbr_v, chain_at(nbr_v).lib_cnt += 1);
+  vertex_for_each_4_nbr (v, nbr_v, all_nbr_live &= (--chain_at(nbr_v).lib_cnt != 0));
+  vertex_for_each_4_nbr (v, nbr_v, chain_at(nbr_v).lib_cnt += 1);
   return all_nbr_live;
 }
 
@@ -432,7 +432,7 @@ void Board::play_not_eye (Player player, Vertex v) {
 
   place_stone (player, v);
 
-  vertex_for_each_nbr (v, nbr_v, {
+  vertex_for_each_4_nbr (v, nbr_v, {
 
       nbr_cnt [nbr_v].player_inc (player);
 
@@ -468,7 +468,7 @@ void Board::play_not_eye (Player player, Vertex v) {
 
 no_inline
 void Board::play_eye_legal (Player player, Vertex v) {
-  vertex_for_each_nbr (v, nbr_v, {
+  vertex_for_each_4_nbr (v, nbr_v, {
     chain_at(nbr_v).lib_cnt -= 1;
     chain_at(nbr_v).lib_sum -= v.get_idx();
   });
@@ -476,11 +476,11 @@ void Board::play_eye_legal (Player player, Vertex v) {
   basic_play (player, v);
   place_stone (player, v);
 
-  vertex_for_each_nbr (v, nbr_v, {
+  vertex_for_each_4_nbr (v, nbr_v, {
       nbr_cnt [nbr_v].player_inc (player);
     });
 
-  vertex_for_each_nbr (v, nbr_v, {
+  vertex_for_each_4_nbr (v, nbr_v, {
       if ((chain_at(nbr_v).lib_cnt == 0))
         remove_chain (nbr_v);
     });
@@ -541,7 +541,7 @@ void Board::remove_chain (Vertex v) {
   assertc (board_ac, act_v == v);
 
   do {
-    vertex_for_each_nbr (act_v, nbr_v, {
+    vertex_for_each_4_nbr (act_v, nbr_v, {
         nbr_cnt [nbr_v].player_dec (old_color.to_player());
         chain_at(nbr_v).lib_cnt += 1;
         chain_at(nbr_v).lib_sum += act_v.get_idx();
@@ -569,7 +569,7 @@ void Board::place_stone (Player pl, Vertex v) {
   chain_id_ [v] = v;
   chain_at(v).lib_cnt = nbr_cnt[v].empty_cnt ();
   chain_[v].lib_sum = 0;
-  vertex_for_each_nbr(v, nbr, {
+  vertex_for_each_4_nbr(v, nbr, {
     chain_[v].lib_sum += nbr.get_idx() & -(color_at[nbr] == Color::empty());
   });
 }
@@ -604,6 +604,38 @@ bool Board::both_player_pass () {
     (player_last_v [Player::white ()] == Vertex::pass ());
 }
 
+int Board::tt_score() const {
+  FastMap<Player, int> score;
+  player_for_each(pl) score[pl] = 0;
+
+  player_for_each(pl) {
+    FastStack<Vertex, board_area> queue;
+    FastMap<Vertex, bool> visited;
+
+    vertex_for_each_all(v) {
+      if (color_at[v] == Color(pl)) queue.push_back(v);
+      visited[v] = false;
+    }
+
+    while (!queue.empty()) {
+      score[pl] += 1;
+      Vertex v = queue.pop_top();
+      visited[v] = true;
+      vertex_for_each_4_nbr(v, nbr, {
+        if (!visited[nbr] && color_at[nbr] == Color::empty()) {
+          queue.push_back(nbr);
+        }
+      });
+    }
+  }
+
+  return komi_ + score[Player::black ()] - score[Player::white ()];
+}
+
+int Board::tt_winner_score() const {
+  int tmp = tt_score () > 0;
+  return  tmp + tmp - 1;
+}
 
 int Board::approx_score () const {
   return komi_ + player_v_cnt[Player::black ()] -  player_v_cnt[Player::white ()];
@@ -730,7 +762,7 @@ void Board::check_nbr_cnt () const {
     color_for_each (col) {
       nbr_color_cnt [col] = 0;
     }
-    vertex_for_each_nbr (v, nbr_v, {
+    vertex_for_each_4_nbr (v, nbr_v, {
         nbr_color_cnt [color_at [nbr_v]]++;
       });
 
@@ -754,13 +786,13 @@ void Board::check_chain_at () const {
         Vertex atari = Vertex(chain_[chain_id_[v]].lib_sum);
         assert (color_at[atari] == Color::empty());
         uint my_nbr_cnt = 0;
-        vertex_for_each_nbr (atari, nbr, {
+        vertex_for_each_4_nbr (atari, nbr, {
             my_nbr_cnt += chain_id_ [v] == chain_id_[nbr];
         });
         assert (my_nbr_cnt == 1);
       }
 
-      vertex_for_each_nbr (v, nbr_v, {
+      vertex_for_each_4_nbr (v, nbr_v, {
           if (color_at[v] == color_at[nbr_v])
             assert (chain_id_ [v] == chain_id_ [nbr_v]);
         });
