@@ -613,22 +613,25 @@ int Board::tt_score() const {
     FastMap<Vertex, bool> visited;
 
     vertex_for_each_all(v) {
-      if (color_at[v] == Color(pl)) queue.push_back(v);
       visited[v] = false;
+      if (color_at[v] == Color(pl)) {
+        queue.push_back(v);
+        visited[v] = true;
+      }
     }
 
     while (!queue.empty()) {
-      score[pl] += 1;
       Vertex v = queue.pop_top();
-      visited[v] = true;
+      assertc (board_ac, visited[v]);
+      score[pl] += 1;
       vertex_for_each_4_nbr(v, nbr, {
         if (!visited[nbr] && color_at[nbr] == Color::empty()) {
           queue.push_back(nbr);
+          visited[nbr] = true;
         }
       });
     }
   }
-
   return komi_ + score[Player::black ()] - score[Player::white ()];
 }
 
