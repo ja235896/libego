@@ -35,12 +35,14 @@ public:
     stringstream s;
     s << player.to_string () << " " 
       << v.to_string () << " " 
-      << stat.to_string();
+      << stat.to_string() << " "
+      << rave_stat.to_string();
     return s.str();
   }
 
 public:
   Stat   stat;
+  Stat   rave_stat;
   Player player;
   Vertex v;
 };
@@ -166,6 +168,28 @@ public:
        path [hi]->stat.update (sample);
   }
 
+
+  bool rave_node_in_playout(Node* node, Board& board, int move_from, int move_to){
+    Move move = Move(node->player, node->v);
+    reps (ii, move_from, move_to){
+       if (move == board.move_history[ii])
+         return true;
+    }
+    return false;
+  }
+
+  void rave_update_history (Board& board, Board& base_board, float sample) {
+    int move_from = base_board.move_no;
+    int move_to = board.move_no;
+
+    rep (hi, path.size()) {
+       //cout << hi << endl;
+       for(Node::Iterator ni(*path [hi]); ni; ++ni) {
+         if (rave_node_in_playout(ni, board, move_from+hi, move_to))
+           ni->rave_stat.update(sample);
+       }
+    }
+  }
 private:
 
   static const uint uct_max_nodes = 1000000;
@@ -264,6 +288,15 @@ private:
     });
   }
 
+  //rave2
+  float rave_ucb(Node* child, float explore_coeff){
+    float score = child->stat.ucb (child->player, explore_coeff);
+    float rave_score = child->rave_stat.ucb (child->player, explore_coeff);
+    float alpha = min(0.9, 0.01 * child->stat.update_count());
+    float beta = 1.0 - alpha;
+    return alpha*score + beta*rave_score;
+  }
+
   Vertex uct_child_move() {
     Node* parent = tree.act_node ();
     Vertex best_v = Vertex::any();
@@ -271,7 +304,8 @@ private:
     float explore_coeff = log (parent->stat.update_count()) * explore_rate;
 
     for(Node::Iterator ni(*parent); ni; ++ni) {
-      float child_urgency = ni->stat.ucb (ni->player, explore_coeff);
+      //float child_urgency = ni->stat.ucb (ni->player, explore_coeff);
+      float child_urgency = rave_ucb(ni, explore_coeff);
       if (child_urgency > best_urgency) {
         best_urgency  = child_urgency;
         best_v = ni->v;
@@ -341,6 +375,7 @@ private:
 
       if (play_board.both_player_pass()) {
         tree.update_history (play_board.tt_winner().to_score());
+        tree.rave_update_history (play_board, base_board, play_board.tt_winner().to_score());
         return;
       }
     }
@@ -354,6 +389,7 @@ private:
 
     int score = play_board.playout_winner().to_score();
     tree.update_history (score); // black -> 1, white -> -1
+    tree.rave_update_history (play_board, base_board, play_board.tt_winner().to_score());
     return;
   }
   
