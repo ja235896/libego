@@ -1,0 +1,11 @@
+#!/bin/bash
+name="modname"
+opp_name="original"
+program="ja235896_libego_$name"
+opp_program="ja235896_libego_$opp_name"
+mkdir "$name"b
+mkdir "$name"w
+gogui_bin/gogui-twogtp -black ./$program  -white ./$opp_program -auto -size 9 -komi 6.5 -games 100 -sgffile ""$name"b/"$name"b"
+gogui_bin/gogui-twogtp -analyze ""$name"b/"$name"b.dat"
+gogui_bin/gogui-twogtp -black ./$opp_program  -white ./$program -auto -size 9 -komi 6.5 -games 100 -sgffile ""$name"w/"$name"w"
+gogui_bin/gogui-twogtp -analyze ""$name"w/"$name"w.dat"
