@@ -1,0 +1,9 @@
+%section server
+    server cgos.boardspace.net
+    port 6867
+
+%section player
+     name      ja235896
+     password  kotek
+     invoke    ./ja235896_libego_rave
+     priority  7

@@ -1,5 +1,5 @@
 #!/bin/bash
-name="modname"
+name="rave"
 opp_name="original"
 program="ja235896_libego_$name"
 opp_program="ja235896_libego_$opp_name"

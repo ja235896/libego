@@ -1,0 +1,17 @@
+#!/bin/bash
+name=$1
+program="ja235896_libego_$name"
+
+cat > config_$name.txt <<END_OF_CONFIG
+%section server
+    server cgos.boardspace.net
+    port 6867
+
+%section player
+     name      ja235896
+     password  kotek
+     invoke    ./$program
+     priority  7
+END_OF_CONFIG
+
+./cgosGtp-linux-x86_32 -c config_$name.txt -k kill_$program
