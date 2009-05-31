@@ -231,9 +231,6 @@ void Node_rec_print (Node* node, ostream& out, uint depth, float min_visit) {
   }
 }
 
-  Board&        base_board;
-  Tree          tree;      // TODO sync tree->root with base_board
-  LocalPolicy   policy;
 
 string Node_to_string (Node* node, float min_visit) { 
   ostringstream out_str;
@@ -300,34 +297,18 @@ private:
     return alpha*score + beta*rave_score;
   }
 
-  flatten 
-  void do_playout (Player first_player){
-    Player act_player = first_player;
-    Vertex v;
-    
-    play_board.load (&base_board);
-    tree.history_reset ();
-    
-    do {
-      if (tree.act_node ()->no_children ()) { // we're finishing it
-        
-        // If the leaf is ready expand the tree -- add children - 
-        // all potential legal v (i.e.empty)
-        if (tree.act_node()->stat.update_count() >
-            mature_update_count_threshold) 
-        {
-          empty_v_for_each_and_pass (&play_board, v, {
-            tree.alloc_child (v); // TODO simple ko should be handled here
-            // (suicides and ko recaptures, needs to be dealt with later)
-          });
-          continue;            // try again
-        }
-        
-        Playout<LocalPolicy> (&policy, &play_board).run ();
+  Vertex uct_child_move() {
+    Node* parent = tree.act_node ();
+    Vertex best_v = Vertex::any();
+    float best_urgency = -large_float;
+    float explore_coeff = log (parent->stat.update_count()) * explore_rate;
 
-        int score = play_board.winner().get_idx (); // black -> 0, white -> 1
-        tree.update_history (1 - score - score); // black -> 1, white -> -1
-        return;
+    for(Node::Iterator ni(*parent); ni; ++ni) {
+      //float child_urgency = ni->stat.ucb (ni->player, explore_coeff);
+      float child_urgency = rave_ucb(ni, explore_coeff);
+      if (child_urgency > best_urgency) {
+        best_urgency  = child_urgency;
+        best_v = ni->v;
       }
     }
 
