@@ -385,7 +385,7 @@ private:
       assertc(uct_ac, ok);
     }
 
-    Playout<SimplePolicy> (&policy, &play_board).run ();
+    Playout<LocalPolicy> (&policy, &play_board).run ();
 
     int score = play_board.playout_winner().to_score();
     tree.update_history (score); // black -> 1, white -> -1
@@ -406,7 +406,7 @@ private:
 
   Board&        base_board;
   Tree          tree;      // TODO sync tree->root with base_board
-  SimplePolicy  policy;
+  LocalPolicy  policy;
 
   Board play_board;
 
