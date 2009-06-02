@@ -35,6 +35,9 @@ BasicGtp::BasicGtp (Gtp& gtp, Board& board_) : board (board_) {
   gtp.add_gtp_command (this, "play");
   gtp.add_gtp_command (this, "undo");
   gtp.add_gtp_command (this, "showboard");
+
+  gtp.add_gtp_command (this, "time_left");
+  gtp.add_gtp_command (this, "time_settings");
 }
 
 GtpResult BasicGtp::exec_command (const string& command, istream& params) {
@@ -94,6 +97,18 @@ GtpResult BasicGtp::exec_command (const string& command, istream& params) {
     
   if (command == "showboard") {
     return GtpResult::success ("\n" + board.to_string());
+  }
+
+  if (command == "time_left") {
+    int time_left;
+    Player pl;
+    if (!(params >> pl >> time_left)) return GtpResult::syntax_error ();
+    board.time_left = time_left;
+    return GtpResult::success ();
+  }
+
+  if (command == "time_settings") {
+    return GtpResult::success ();
   }
 
   assert(false);

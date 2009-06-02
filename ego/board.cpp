@@ -291,6 +291,7 @@ void Board::clear (float komi) {
   last_player_ = Player::white (); // act player is other
   last_move_status = play_ok;
   ko_v_        = Vertex::any ();
+  time_left = 60;
   vertex_for_each_all (v) {
     color_at      [v] = Color::off_board ();
     nbr_cnt       [v] = NbrCounter::Empty();
@@ -807,6 +808,10 @@ void Board::check_no_more_legal (Player player) { // at the end of the playout
   vertex_for_each_all (v)
     if (color_at[v] == Color::empty ())
       assert (is_eyelike (player, v) || is_pseudo_legal (player, v) == false);
+}
+
+bool Board::is_panic_mode () {
+  return time_left < 30;
 }
 
 const Zobrist Board::zobrist[1] = { Zobrist (global_random) };

@@ -111,6 +111,8 @@ public:                         // board interface
   uint last_capture_size ();
 
   Move last_move () const;
+  
+  bool is_panic_mode ();
 
 private: 
   Hash recalc_hash () const;
@@ -187,6 +189,8 @@ public:
     play_ss_suicide,
     play_ko
   } last_move_status;
+
+  uint                         time_left;
 
 private:
   int komi_;

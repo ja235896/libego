@@ -117,6 +117,8 @@ private:
     if (board->move_no == 0) return false;
     // P(local) = 1/3
     if (random.rand_int(3)) return false;
+    
+    //if (board->is_panic_mode()) return false;
 
     Vertex center = board->move_history[board->move_no-1].get_vertex();
 

@@ -238,6 +238,10 @@ string Node_to_string (Node* node, float min_visit) {
   return out_str.str ();
 }
 
+bool is_panic_mode(uint time_left){
+  return time_left < 30;
+}
+
 // -----------------------------------------------------------------------------
 
 class Uct {
@@ -246,6 +250,8 @@ public:
   Uct (Board& base_board_) : base_board (base_board_), policy(global_random) { 
     explore_rate                   = 1.0;
     uct_genmove_playout_cnt        = 100000;
+    if (base_board.is_panic_mode())
+      uct_genmove_playout_cnt      = 1000;
     mature_update_count_threshold  = 100.0;
 
     min_visit         = 2500.0;

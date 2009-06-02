@@ -8,10 +8,10 @@ cat > config_$name.txt <<END_OF_CONFIG
     port 6867
 
 %section player
-     name      ja235896
+     name      ja235896_$name
      password  kotek
      invoke    ./$program
      priority  7
 END_OF_CONFIG
 
-./cgosGtp-linux-x86_32 -c config_$name.txt -k kill_$program
+./cgosGtp-linux-x86_32 -c config_$name.txt -k kill_$program >> log_$name.txt
