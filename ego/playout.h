@@ -116,7 +116,7 @@ private:
     // No local move when game begins.
     if (board->move_no == 0) return false;
     // P(local) = 1/3
-    if (random.rand_int(3)) return false;
+    if (random.rand_int(100) >= 65) return false;
     
     //if (board->is_panic_mode()) return false;
 
